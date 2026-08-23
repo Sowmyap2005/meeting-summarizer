@@ -4,7 +4,12 @@ import tempfile
 import streamlit as st
 from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(
+    api_key=os.getenv("GROQ_API_KEY"),
+    base_url="https://api.groq.com/openai/v1",
+    timeout=180.0,
+    max_retries=3,
+)
 
 PROMPT = """Summarize this meeting transcript.
 
@@ -21,7 +26,7 @@ Transcript:
 def transcribe(audio_path):
     with open(audio_path, "rb") as f:
         result = client.audio.transcriptions.create(
-            model="whisper-1",
+            model="whisper-large-v3",
             file=f,
         )
     return result.text
@@ -29,13 +34,17 @@ def transcribe(audio_path):
 
 def summarize(transcript):
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="openai/gpt-oss-20b",
         messages=[{"role": "user", "content": PROMPT.format(transcript=transcript)}],
     )
     return response.choices[0].message.content
 
 
 st.title("Meeting Summarizer")
+
+if not os.getenv("GROQ_API_KEY"):
+    st.error("GROQ_API_KEY is not set. Set it and restart the app.")
+    st.stop()
 
 uploaded = st.file_uploader("Upload meeting audio", type=["mp3", "wav", "m4a"])
 
@@ -52,6 +61,10 @@ if uploaded is not None:
 
             with st.spinner("Summarizing..."):
                 summary = summarize(transcript)
+        except Exception as e:
+            st.error(f"{type(e).__name__}: {e}")
+            st.error(f"Cause: {e.__cause__!r}")
+            st.stop()
         finally:
             os.remove(tmp_path)
 

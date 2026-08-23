@@ -6,7 +6,7 @@ key decisions and action items.
 ## How it works
 
 1. Audio is uploaded through a Streamlit page.
-2. The file is sent to the OpenAI Whisper API for transcription.
+2. The file is sent to the Groq API (Whisper large v3) for transcription.
 3. The transcript is sent to an LLM with a prompt that asks for a summary,
    key decisions, and action items.
 4. The transcript and summary are shown on the page and can be downloaded.
@@ -15,7 +15,8 @@ key decisions and action items.
 
 ```bash
 pip install -r requirements.txt
-export OPENAI_API_KEY=your_key_here
+$env:GROQ_API_KEY="your_key_here"   # Windows PowerShell
+# export GROQ_API_KEY=your_key_here    # macOS / Linux
 streamlit run app.py
 ```
 
